@@ -3,7 +3,7 @@ import time
 import os
 
 def search_card(card_name):
-    """Searches for a card by name using Scryfall's fuzzy search."""
+    # Searches for a card by name using Scryfall's fuzzy search as to not require exact matches
     url = f"https://api.scryfall.com/cards/named?fuzzy={card_name.replace(' ', '%20')}"
     response = requests.get(url)
     
@@ -15,21 +15,16 @@ def search_card(card_name):
     
 def deck_manager():
     
-    # Create a file to store decks if it doesn't exits already
+    # Create a file to store decks if it doesn't exist already
     if not os.path.exists("decks.txt"):
         with open("decks.txt", "w") as file:
             pass
         
     deck_name = input("Enter a deck name: ")
-    deck_contents = []
     found = False
     with open("decks.txt", 'r') as file:
         for line in file:
-            if found:
-                if line.strip() == "":  # Stop at an empty line to indicate end of deck
-                    break
-                deck_contents.append(line.strip())
-            elif deck_name in line:
+            if deck_name in line:
                 found = True
     
     if not found:
@@ -38,14 +33,78 @@ def deck_manager():
         if create_new_deck == 'y':
             with open("decks.txt", 'a') as file:
                 file.write(f"\n{deck_name}\n")
+            found = True
         else:
             return
         
     if found:
-        for deck_card in deck_contents:
-            time.sleep(0.5)
-            card = search_card(deck_card)
-            print(f"{card['name']} - {card['mana_cost']} ({card['type_line']})")
+        edit_deck = input(F"Would you like to edit '{deck_name}'? (y/n): ")
+        if edit_deck == 'y':
+            deck_editor(deck_name)
+            
+        view_deck = input(F"Would you like to view '{deck_name}'? (y/n): ")
+        if view_deck == 'y':
+            deck_viewer(deck_name)
+            
+            
+def deck_editor(deck_name):
+    with open("decks.txt", "r") as file:
+        lines = file.readlines()
+
+    updated_lines = []
+    inside_deck = False
+
+    for line in lines:
+        # Identify where the deck starts
+        if line == deck_name:
+            inside_deck = True 
+        
+        elif inside_deck and line == "":  # Empty line indicates the end of a deck
+            inside_deck = False
+            updated_lines.append(line)  # Preserve the empty line
+        
+        updated_lines.append(line)  # Preserve all other lines
+
+    # Add new cards
+    new_cards = []
+    while True:
+        card_name = input("Enter card to add (or press enter to stop editing): ").strip()
+        if not card_name:
+            break
+        card = search_card(card_name)
+        if card:
+            new_cards.append(f"{card['name']}\n")
+
+    if new_cards:
+        # Find the last occurrence of the deck section and insert cards there
+        for i in range(len(updated_lines)):
+            if updated_lines[i].strip() == deck_name:
+                index = i + 1
+                while index < len(updated_lines) and updated_lines[index].strip() != "":
+                    index += 1
+                updated_lines[index:index] = new_cards  # Insert cards before empty line
+
+    # Write updated content back to the file
+    with open("decks.txt", "w") as file:
+        file.writelines(updated_lines)
+    
+
+def deck_viewer(deck_name):
+    deck_contents = []
+    start_reading = False
+    with open("decks.txt", 'r') as file:
+        for line in file:
+            if start_reading:
+                if line.strip() == "":  # Stop at an empty line to indicate end of deck
+                    break
+                deck_contents.append(line.strip())
+            elif deck_name in line:
+                start_reading = True
+                
+    for deck_card in deck_contents:
+        time.sleep(0.5)
+        card = search_card(deck_card)
+        print(f"{card['name']} - {card['mana_cost']} ({card['type_line']})")
             
 
 def main():
