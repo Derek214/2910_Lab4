@@ -1,4 +1,6 @@
 import requests
+import time
+import os
 
 def search_card(card_name):
     """Searches for a card by name using Scryfall's fuzzy search."""
@@ -11,5 +13,59 @@ def search_card(card_name):
     else:
         return {"error": "Card not found"}
     
-card = search_card("brushwagg")
-print(card["name"], "-", card["mana_cost"])
+def deck_manager():
+    
+    # Create a file to store decks if it doesn't exits already
+    if not os.path.exists("decks.txt"):
+        with open("decks.txt", "w") as file:
+            pass
+        
+    deck_name = input("Enter a deck name: ")
+    deck_contents = []
+    found = False
+    with open("decks.txt", 'r') as file:
+        for line in file:
+            if found:
+                if line.strip() == "":  # Stop at an empty line to indicate end of deck
+                    break
+                deck_contents.append(line.strip())
+            elif deck_name in line:
+                found = True
+    
+    if not found:
+        print(f"'{deck_name}' not found in the file.")
+        create_new_deck = input(f"Would you like to create '{deck_name}'? (y/n): ")
+        if create_new_deck == 'y':
+            with open("decks.txt", 'a') as file:
+                file.write(f"\n{deck_name}\n")
+        else:
+            return
+        
+    if found:
+        for deck_card in deck_contents:
+            time.sleep(0.5)
+            card = search_card(deck_card)
+            print(f"{card['name']} - {card['mana_cost']} ({card['type_line']})")
+            
+
+def main():
+    while True:
+        print("\nMagic: The Gathering Deck Builder")
+        print("1. Search for a card")
+        print("2. Open Deck Manager")
+        print("6. Exit")
+
+        choice = input("Select an option: ")
+
+        if choice == "1":
+            card_name = input("Enter card name: ")
+            card = search_card(card_name)
+            print(f"{card['name']} - {card['mana_cost']} ({card['type_line']})")
+
+        elif choice == "2":
+            deck_manager()
+
+        else:
+            break
+            
+main()
