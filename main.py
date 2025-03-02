@@ -8,10 +8,19 @@ def search_card(card_name):
     response = requests.get(url)
     
     if response.status_code == 200:
-        card_data = response.json()
-        return card_data
+        return response.json()
     else:
         return "error: Card not found"
+    
+def get_random_card():
+    # Fetches a completely random Magic card
+    url = "https://api.scryfall.com/cards/random"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {"error: Failed to get a random card"}
     
 def print_formatted_card(card_data):
     if "error" in card_data:
@@ -23,7 +32,7 @@ def print_formatted_card(card_data):
         print(f"${card_data['prices']['usd']}")
     
     
-def deck_manager():
+def deck_manager(random):
     
     # Create a file to store decks if it doesn't exist already
     if not os.path.exists("decks.txt"):
@@ -46,7 +55,13 @@ def deck_manager():
             found = True
         else:
             return
-        
+    
+    if random:
+        with open("decks.txt", 'a') as file:
+            for i in range(60):
+                time.sleep(0.5)
+                file.write(f"{get_random_card()['name']}\n")
+    
     if found:
         edit_deck = input(F"Would you like to edit '{deck_name}'? (y/n): ")
         if edit_deck == 'y':
@@ -120,8 +135,10 @@ def deck_viewer(deck_name):
 def main():
     while True:
         print("\nMagic: The Gathering Deck Builder")
-        print("1. Search for a card")
+        print("1. Search for a Card")
         print("2. Open Deck Manager")
+        print("3. Search Random Card")
+        print("4. Generate Random Deck")
         print("6. Exit")
 
         choice = input("Select an option: ")
@@ -132,7 +149,14 @@ def main():
             print_formatted_card(card)
 
         elif choice == "2":
-            deck_manager()
+            deck_manager(False)
+            
+        elif choice == "3":
+            card = get_random_card()
+            print_formatted_card(card)
+        
+        elif choice == "4":
+            deck_manager(True)
 
         else:
             break
