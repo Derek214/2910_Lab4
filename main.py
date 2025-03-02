@@ -11,7 +11,17 @@ def search_card(card_name):
         card_data = response.json()
         return card_data
     else:
-        return {"error": "Card not found"}
+        return "error: Card not found"
+    
+def print_formatted_card(card_data):
+    if "error" in card_data:
+        print(card_data)
+    else:
+        print(f"\n{card_data['name']} - {card_data['mana_cost']} ({card_data['type_line']})")
+        print("------------------------")
+        print(card_data['oracle_text'])
+        print(f"${card_data['prices']['usd']}")
+    
     
 def deck_manager():
     
@@ -104,7 +114,7 @@ def deck_viewer(deck_name):
     for deck_card in deck_contents:
         time.sleep(0.5)
         card = search_card(deck_card)
-        print(f"{card['name']} - {card['mana_cost']} ({card['type_line']})")
+        print_formatted_card(card)
             
 
 def main():
@@ -119,7 +129,7 @@ def main():
         if choice == "1":
             card_name = input("Enter card name: ")
             card = search_card(card_name)
-            print(f"{card['name']} - {card['mana_cost']} ({card['type_line']})")
+            print_formatted_card(card)
 
         elif choice == "2":
             deck_manager()
