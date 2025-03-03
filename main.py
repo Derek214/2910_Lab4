@@ -1,6 +1,7 @@
 import requests
 import time
 import os
+import random
 
 def search_card(card_name):
     # Searches for a card by name using Scryfall's fuzzy search as to not require exact matches
@@ -20,16 +21,61 @@ def get_random_card():
     if response.status_code == 200:
         return response.json()
     else:
-        return {"error: Failed to get a random card"}
+        return "error: Failed to get a random card"
+
+# This could be expanded to allow more parameters or reused for a non-random parameterized search
+def parameterized_random_card(color=None, format=None):
+    base_url = "https://api.scryfall.com/cards/search"
+    
+    # Build query parameters
+    query = ""
+    if color:
+        query += f" c:{color}"  
+    if format:
+        query += f" f:{format}" 
+        
+    params = {"q": query.strip()}  # Remove extra spaces
+
+    # Send request
+    response = requests.get(base_url, params=params)
+
+    if response.status_code == 200:
+        card_data = response.json()
+
+        cards = [
+            {
+                card['name'],
+            }
+            for card in card_data["data"]
+        ]
+
+        return random.choice(cards)  # Pick a random card 
+
+    else:
+        return "error: No Matching Cards Found"
+
     
 def print_formatted_card(card_data):
+    
     if "error" in card_data:
         print(card_data)
     else:
-        print(f"\n{card_data['name']} - {card_data['mana_cost']} ({card_data['type_line']})")
-        print("------------------------")
-        print(card_data['oracle_text'])
-        print(f"${card_data['prices']['usd']}")
+        # Handle double-faced cards
+        if 'card_faces' in card_data:
+            # If the card has multiple faces, loop through them
+            for face in card_data['card_faces']:
+                mana_cost = face.get('mana_cost', 'N/A')  # Use 'N/A' if mana_cost is not available
+                print(f"\n{face['name']} - {mana_cost} ({face['type_line']})")
+                print("------------------------")
+                print(face['oracle_text'])
+                
+            print(f"${card_data['prices']['usd']}")
+        else:
+            # Single-faced card
+            print(f"\n{card_data['name']} - {card_data['mana_cost']} ({card_data['type_line']})")
+            print("------------------------")
+            print(card_data['oracle_text'])
+            print(f"${card_data['prices']['usd']}")
     
     
 def deck_manager(random):
@@ -58,9 +104,12 @@ def deck_manager(random):
     
     if random:
         with open("decks.txt", 'a') as file:
+            
+            color = input("Input a color for the deck (W, U, B, R, G): ")
+            format = input("Input a format for the deck (standard, commander, modern, legacy, pauper): ")
             for i in range(60):
-                time.sleep(0.5)
-                file.write(f"{get_random_card()['name']}\n")
+                time.sleep(0.4)
+                file.write(f"{parameterized_random_card(color, format)}\n")
     
     if found:
         edit_deck = input(F"Would you like to edit '{deck_name}'? (y/n): ")
@@ -127,7 +176,7 @@ def deck_viewer(deck_name):
                 start_reading = True
                 
     for deck_card in deck_contents:
-        time.sleep(0.5)
+        time.sleep(0.4)
         card = search_card(deck_card)
         print_formatted_card(card)
             
@@ -139,7 +188,7 @@ def main():
         print("2. Open Deck Manager")
         print("3. Search Random Card")
         print("4. Generate Random Deck")
-        print("6. Exit")
+        print("5. Exit")
 
         choice = input("Select an option: ")
 
