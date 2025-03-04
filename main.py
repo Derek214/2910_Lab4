@@ -41,18 +41,16 @@ def parameterized_random_card(color=None, format=None):
 
     if response.status_code == 200:
         card_data = response.json()
+        
+        # Extract names properly
+        cards = [card['name'] for card in card_data.get("data", [])]
 
-        cards = [
-            {
-                card['name'],
-            }
-            for card in card_data["data"]
-        ]
+        if cards:  # Ensure there's at least one match
+            return random.choice(cards)
+        else:
+            return "error: No Matching Cards Found"
 
-        return random.choice(cards)  # Pick a random card 
-
-    else:
-        return "error: No Matching Cards Found"
+    return f"error: API request failed with status {response.status_code}"
 
     
 def print_formatted_card(card_data):
@@ -76,7 +74,6 @@ def print_formatted_card(card_data):
             print("------------------------")
             print(card_data['oracle_text'])
             print(f"${card_data['prices']['usd']}")
-    
     
 def deck_manager(random):
     
@@ -107,9 +104,15 @@ def deck_manager(random):
             
             color = input("Input a color for the deck (W, U, B, R, G): ")
             format = input("Input a format for the deck (standard, commander, modern, legacy, pauper): ")
-            for i in range(60):
-                time.sleep(0.4)
-                file.write(f"{parameterized_random_card(color, format)}\n")
+            if format == "commander":
+                for i in range(100):
+                    time.sleep(0.4)
+                    file.write(f"{parameterized_random_card(color, format)}\n")
+            else:
+                for i in range(60):
+                    time.sleep(0.4)
+                    file.write(f"{parameterized_random_card(color, format)}\n")
+
     
     if found:
         edit_deck = input(F"Would you like to edit '{deck_name}'? (y/n): ")
@@ -198,14 +201,14 @@ def main():
             print_formatted_card(card)
 
         elif choice == "2":
-            deck_manager(False)
+            deck_manager(random=False)
             
         elif choice == "3":
             card = get_random_card()
             print_formatted_card(card)
         
         elif choice == "4":
-            deck_manager(True)
+            deck_manager(random=True)
 
         else:
             break
