@@ -106,11 +106,11 @@ def deck_manager(random):
             format = input("Input a format for the deck (standard, commander, modern, legacy, pauper): ")
             if format == "commander":
                 for i in range(100):
-                    time.sleep(0.4)
+                    time.sleep(0.3)
                     file.write(f"{parameterized_random_card(color, format)}\n")
             else:
                 for i in range(60):
-                    time.sleep(0.4)
+                    time.sleep(0.3)
                     file.write(f"{parameterized_random_card(color, format)}\n")
 
     
@@ -149,7 +149,9 @@ def deck_editor(deck_name):
         if not card_name:
             break
         card = search_card(card_name)
-        if card:
+        if "error" in card:
+            print(card)
+        else:
             new_cards.append(f"{card['name']}\n")
 
     if new_cards:
@@ -179,7 +181,7 @@ def deck_viewer(deck_name):
                 start_reading = True
                 
     for deck_card in deck_contents:
-        time.sleep(0.4)
+        time.sleep(0.3)
         card = search_card(deck_card)
         print_formatted_card(card)
             
