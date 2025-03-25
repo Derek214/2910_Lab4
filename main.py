@@ -193,19 +193,14 @@ def import_deck(deck_name):
     with open(f"{deck_name}.txt", 'r') as file:
         for line in file:
             parts = line.strip().split(" ")
-
-            if len(parts) < 4:  # Ensure there's enough data
-                continue 
-
-            # Extract card name by removing the quantity, set code, and set number
             card_name = " ".join(parts[1:])  # Start after quantity
-            card_name = re.sub(r"\(\w+\) \d+", "", card_name).strip()  # Remove (set) number
+            card_name = re.sub(r"\(\w+\) \d+", "", card_name).strip()  # Remove set number
             card_name = re.sub(r'\[.*?\]|\(.*?\)|\{.*?\}', "", card_name).strip()
 
             card_class = parts[-1].strip("[]").lower()  # Extract classification
             
             if card_class != "land" and card_class != "commander{top}":
-                deck_contents.append(f"{card_name}|{card_class}")  # Format as "Name Category"
+                deck_contents.append(f"{card_name}|{card_class}")  # Format as "Name|Category"
         
         filter = input("Remove by category (y/n): ")
         if filter == "y":
