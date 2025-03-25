@@ -2,6 +2,7 @@ import requests
 import time
 import os
 import random
+import re
 
 def search_card(card_name):
     # Searches for a card by name using Scryfall's fuzzy search as to not require exact matches
@@ -185,6 +186,66 @@ def deck_viewer(deck_name):
         card = search_card(deck_card)
         print_formatted_card(card)
             
+def import_deck(deck_name):
+    deck_name = f"{deck_name}"
+    deck_name = deck_name.replace(" ", "_")
+    deck_contents = []        
+    with open(f"{deck_name}.txt", 'r') as file:
+        for line in file:
+            parts = line.strip().split(" ")
+
+            if len(parts) < 4:  # Ensure there's enough data
+                continue 
+
+            # Extract card name by removing the quantity, set code, and set number
+            card_name = " ".join(parts[1:])  # Start after quantity
+            card_name = re.sub(r"\(\w+\) \d+", "", card_name).strip()  # Remove (set) number
+            card_name = re.sub(r'\[.*?\]|\(.*?\)|\{.*?\}', "", card_name).strip()
+
+            card_class = parts[-1].strip("[]").lower()  # Extract classification
+            
+            if card_class != "land" and card_class != "commander{top}":
+                deck_contents.append(f"{card_name}|{card_class}")  # Format as "Name Category"
+        
+        filter = input("Remove by category (y/n): ")
+        if filter == "y":
+            category = input("Choose a Category (will differ depending on your deck's categories): ").lower()
+            deck_contents = filter_by_category(deck_contents, category)
+        
+        card_names = [card.split("|")[0] for card in deck_contents]
+        card_cutter(card_names)
+
+            
+def card_cutter(card_names):
+        
+    if len(card_names) == 1:
+        print(f"Remove {card_names[0]}")
+        return
+    if len(card_names) == 0:
+        print("The deck contains no cards with that category")
+        return
+        
+    num1, num2 = random.sample(range(0, len(card_names)), 2)
+    
+    first_card = search_card(card_names[num1])
+    second_card = search_card(card_names[num2])
+    
+    print_formatted_card(first_card)
+    print_formatted_card(second_card)
+    
+    choice = input("\n\033[31mChoose the card you prefer (1 or 2): \033[0m")
+    print("\033[31m=================================================================\033[0m")
+    if choice == "1":
+        del card_names[num1]
+    elif choice == "2":
+        del card_names[num2]
+        
+    card_cutter(card_names)
+            
+    
+def filter_by_category(deck_contents, category):
+    filtered_deck = [card for card in deck_contents if card.split("|")[1] == category]
+    return filtered_deck
 
 def main():
     while True:
@@ -193,7 +254,8 @@ def main():
         print("2. Open Deck Manager")
         print("3. Search Random Card")
         print("4. Generate Random Deck")
-        print("5. Exit")
+        print("5. Cut Cards from an Imported Deck")
+        print("6. Exit")
 
         choice = input("Select an option: ")
 
@@ -211,6 +273,10 @@ def main():
         
         elif choice == "4":
             deck_manager(random=True)
+            
+        elif choice == "5":
+            deck_name = input("Enter the name of the deck that you would like to cut cards from: \n").lower()
+            import_deck(deck_name)
 
         else:
             break
